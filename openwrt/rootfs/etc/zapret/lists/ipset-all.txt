@@ -1,0 +1,3 @@
+# Truncated copy placeholder: large list of IP ranges.
+# If you rely on IP list matching with nftables/ipset, you can integrate it separately.
+# nfqws primarily uses hostlist SNI/Host matching so this may be optional.

@@ -1,0 +1,12 @@
+<%+header%>
+<div class="cbi-section">
+  <div class="cbi-value">
+    <form method="post" action="<%=url('admin/services/zapret')%>">
+      <input type="hidden" name="token" value="<%=token%>" />
+      <input class="cbi-button cbi-button-apply" type="submit" name="start" value="Start" />
+      <input class="cbi-button cbi-button-reset" type="submit" name="stop" value="Stop" />
+      <input class="cbi-button cbi-button-reload" type="submit" name="restart" value="Restart" />
+    </form>
+  </div>
+</div>
+<%+footer%>

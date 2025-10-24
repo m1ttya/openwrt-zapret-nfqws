@@ -1,0 +1,210 @@
+#!/bin/sh /etc/rc.common
+# OpenWrt procd service for zapret (nfqws + nftables)
+
+START=70
+STOP=10
+USE_PROCD=1
+
+SERVICE_NAME="zapret"
+RUNDIR="/var/run/zapret"
+NFT_TMP="$RUNDIR/zapret.nft"
+PIDFILE="$RUNDIR/nfqws.pid"
+
+ensure_rundir() {
+  [ -d "$RUNDIR" ] || mkdir -p "$RUNDIR"
+}
+
+has_jump_rule() {
+  # returns 0 if jump to zapret exists in fw4 forward chain
+  nft -a list chain inet fw4 forward 2>/dev/null | grep -q "jump zapret"
+}
+
+remove_all_jumps() {
+  # remove all jump zapret rules from forward chain
+  local handles
+  handles=$(nft -a list chain inet fw4 forward 2>/dev/null | awk '/jump zapret/ {print $NF}')
+  [ -n "$handles" ] || return 0
+  for h in $handles; do
+    nft delete rule inet fw4 forward handle $h 2>/dev/null || true
+  done
+}
+
+build_nft_rules() {
+  # optionally create/update nft set from ipset file
+  if [ "$IPSET_ENABLE" = "1" ] && [ -f "$IPSET_PATH" ]; then
+    build_ipset_nft || echo "[zapret] failed to build ipset nft set"
+  fi
+
+  local tcp_ports="$PORTS_TCP"
+  local udp_ports="$PORTS_UDP"
+  local if_lan="$IF_LAN"
+  local if_wan="$IF_WAN"
+  local qn="$QUEUE_NUM"
+
+  # Remove old chain and jump, then create a fresh chain and a single jump
+  remove_all_jumps
+  nft delete chain inet fw4 zapret 2>/dev/null || true
+  nft add chain inet fw4 zapret 2>/dev/null || true
+  has_jump_rule || nft insert rule inet fw4 forward counter jump zapret 2>/dev/null || true
+
+  # Build minimal nft program to add our rules atomically
+  cat >"$NFT_TMP" <<EOF
+add rule inet fw4 zapret iifname "$if_lan" oifname "$if_wan" tcp dport { ${tcp_ports// /,} } counter nfqueue num $qn bypass
+add rule inet fw4 zapret iifname "$if_lan" oifname "$if_wan" udp dport { ${udp_ports// /,} } counter nfqueue num $qn bypass
+EOF
+
+  # If ipset is enabled, prepend ipset-limited rules to narrow scope
+  if [ "$IPSET_ENABLE" = "1" ]; then
+    {
+      echo "add rule inet fw4 zapret iifname \"$if_lan\" oifname \"$if_wan\" tcp dport { ${tcp_ports// /,} } ip daddr @zapret_ipset counter nfqueue num $qn bypass"
+      echo "add rule inet fw4 zapret iifname \"$if_lan\" oifname \"$if_wan\" udp dport { ${udp_ports// /,} } ip daddr @zapret_ipset counter nfqueue num $qn bypass"
+    } | cat - "$NFT_TMP" > "$NFT_TMP.tmp" && mv "$NFT_TMP.tmp" "$NFT_TMP"
+  fi
+}
+
+build_ipset_nft() {
+  # Ensure table exists (fw4 should exist on OpenWrt 22.03+)
+  nft list table inet fw4 >/dev/null 2>&1 || nft add table inet fw4 || true
+  # Ensure set exists
+  nft list set inet fw4 zapret_ipset >/dev/null 2>&1 || nft add set inet fw4 zapret_ipset { type ipv4_addr; flags interval; auto-merge; } || true
+  # Flush set
+  nft flush set inet fw4 zapret_ipset || true
+  # Populate from file (first column, ignore CR)
+  awk '{gsub(/\r/,""); if ($1 ~ /^[0-9]/) print $1 }' "$IPSET_PATH" | while read -r ip; do
+    [ -n "$ip" ] && nft add element inet fw4 zapret_ipset { $ip } 2>/dev/null || true
+  done
+}
+
+detect_if() {
+  local name="$1"
+  local dev
+  dev=$(ubus call network.interface.$name status 2>/dev/null | jsonfilter -e '@.l3_device' 2>/dev/null)
+  [ -z "$dev" ] && dev=$(ubus call network.interface.$name status 2>/dev/null | jsonfilter -e '@.device' 2>/dev/null)
+  if [ -z "$dev" ]; then
+    # fallback to UCI (DSA uses .device, old uses .ifname)
+    dev=$(uci -q get network.$name.device)
+    [ -z "$dev" ] && dev=$(uci -q get network.$name.ifname)
+  fi
+  echo "$dev"
+}
+
+detect_lan_bridge() {
+  # common default
+  [ -d /sys/class/net/br-lan ] && echo br-lan && return 0
+  # try interface.lan
+  detect_if lan
+}
+
+start_service() {
+  ensure_rundir
+
+  # respect enabled flag
+  if [ "$(uci -q get zapret.config.enabled)" != "1" ]; then
+    echo "[zapret] disabled in UCI; not starting"
+    return 0
+  fi
+
+  # read from UCI
+  IF_LAN="$(uci -q get zapret.config.if_lan || echo auto)"
+  IF_WAN="$(uci -q get zapret.config.if_wan || echo auto)"
+  [ "$IF_LAN" = "auto" ] && IF_LAN="$(detect_lan_bridge || echo br-lan)"
+  [ "$IF_WAN" = "auto" ] && IF_WAN="$(detect_if wan || echo wan)"
+  QUEUE_NUM="$(uci -q get zapret.config.queue_num || echo 100)"
+  PORTS_TCP="$(uci -q get zapret.config.ports_tcp || echo 443)"
+  PORTS_UDP="$(uci -q get zapret.config.ports_udp || echo 443)"
+  MODE="$(uci -q get zapret.config.mode || echo auto)"
+  PROFILE="$(uci -q get zapret.config.profile || echo general)"
+  HOSTLIST="$(uci -q get zapret.config.hostlist || echo /etc/zapret/lists/list-general.txt)"
+  IPSET_ENABLE="$(uci -q get zapret.config.ipset_enable || echo 0)"
+  IPSET_PATH="$(uci -q get zapret.config.ipset_path || echo /etc/zapret/lists/ipset-all.txt)"
+  EXTRA_OPTS="$(uci -q get zapret.config.extra_opts || echo)"
+
+  build_nft_rules
+  nft -f "$NFT_TMP" || {
+    echo "[zapret] failed to apply nft rules"
+    return 1
+  }
+
+  local args="--daemon --pidfile $PIDFILE --qnum $QUEUE_NUM --hostlist $HOSTLIST $EXTRA_OPTS"
+  # enable UDP queue if present
+  if [ -n "$PORTS_UDP" ]; then
+    args="$args --qnum-udp $QUEUE_NUM"
+  fi
+  # base desync mode
+  [ -n "$MODE" ] || MODE="auto"
+  case "$MODE" in
+    fake|split|disorder|auto)
+      args="$args --dpi-desync=$MODE"
+      ;;
+    *)
+      echo "[zapret] unknown MODE=$MODE; defaulting to auto"
+      args="$args --dpi-desync=auto"
+      ;;
+  esac
+
+  # preset profile options (Linux-compatible approximation of Windows .bat)
+  case "$PROFILE" in
+    simple_fake)
+      args="$args --dpi-desync-repeats=6"
+      ;;
+    simple_fake_alt)
+      args="$args --dpi-desync-repeats=6 --dpi-desync-fooling=badseq --dpi-desync-badseq-increment=10000000"
+      ;;
+    fake_tls_auto)
+      args="$args --dpi-desync=fake,multidisorder --dpi-desync-split-pos=1,midsld --dpi-desync-repeats=11 --dpi-desync-fooling=badseq --dpi-desync-fake-tls=0x00000000 --dpi-desync-fake-tls=^! --dpi-desync-fake-tls-mod=rnd,dupsid,sni=www.google.com"
+      ;;
+    fake_tls_auto_alt)
+      args="$args --dpi-desync=fake,fakedsplit --dpi-desync-split-pos=1 --dpi-desync-repeats=8 --dpi-desync-fooling=badseq --dpi-desync-badseq-increment=10000000 --dpi-desync-fake-tls-mod=rnd,dupsid,sni=www.google.com"
+      ;;
+    fake_tls_auto_alt2)
+      args="$args --dpi-desync=fake,multisplit --dpi-desync-split-seqovl=681 --dpi-desync-split-pos=1 --dpi-desync-repeats=8 --dpi-desync-fooling=badseq --dpi-desync-badseq-increment=10000000 --dpi-desync-split-seqovl-pattern=/etc/zapret/tls_clienthello_www_google_com.bin --dpi-desync-fake-tls-mod=rnd,dupsid,sni=www.google.com"
+      ;;
+    fake_tls_auto_alt3)
+      args="$args --dpi-desync=fake,multisplit --dpi-desync-split-seqovl=681 --dpi-desync-split-pos=1 --dpi-desync-repeats=8 --dpi-desync-fooling=ts --dpi-desync-split-seqovl-pattern=/etc/zapret/tls_clienthello_www_google_com.bin --dpi-desync-fake-tls-mod=rnd,dupsid,sni=www.google.com"
+      ;;
+    alt)
+      args="$args --dpi-desync=fake,fakedsplit --dpi-desync-repeats=6 --dpi-desync-fooling=ts --dpi-desync-fakedsplit-pattern=0x00 --dpi-desync-fake-tls=/etc/zapret/tls_clienthello_www_google_com.bin"
+      ;;
+    alt2)
+      args="$args --dpi-desync=multisplit --dpi-desync-split-seqovl=652 --dpi-desync-split-pos=2 --dpi-desync-split-seqovl-pattern=/etc/zapret/tls_clienthello_www_google_com.bin"
+      ;;
+    alt3)
+      args="$args --dpi-desync=fakedsplit --dpi-desync-split-pos=1 --dpi-desync-autottl --dpi-desync-fooling=badseq --dpi-desync-repeats=8"
+      ;;
+    alt4)
+      args="$args --dpi-desync=fake,multisplit --dpi-desync-repeats=6 --dpi-desync-fooling=md5sig --dpi-desync-fake-tls=/etc/zapret/tls_clienthello_www_google_com.bin"
+      ;;
+    alt5)
+      args="$args --dpi-desync=syndata"
+      ;;
+    alt6)
+      args="$args --dpi-desync=multisplit --dpi-desync-split-seqovl=681 --dpi-desync-split-pos=1 --dpi-desync-split-seqovl-pattern=/etc/zapret/tls_clienthello_www_google_com.bin"
+      ;;
+    alt7)
+      args="$args --dpi-desync=multisplit --dpi-desync-split-pos=2,sniext+1 --dpi-desync-split-seqovl=679 --dpi-desync-split-seqovl-pattern=/etc/zapret/tls_clienthello_www_google_com.bin"
+      ;;
+    alt8)
+      args="$args --dpi-desync=fake,split2 --dpi-desync-autottl=2 --dpi-desync-fooling=badseq --dpi-desync-badseq-increment=2 --dpi-desync-fake-tls-mod=none"
+      ;;
+    general|*)
+      args="$args --dpi-desync=fake,multidisorder --dpi-desync-split-pos=midsld --dpi-desync-repeats=8 --dpi-desync-fooling=md5sig,badseq"
+      ;;
+  esac
+
+  # QUIC/unknown-UDP emulation, if file exists and UDP is enabled
+  if [ -n "$PORTS_UDP" ] && [ -f /etc/zapret/quic_initial_www_google_com.bin ]; then
+    args="$args --dpi-desync-fake-quic=/etc/zapret/quic_initial_www_google_com.bin --dpi-desync-any-protocol=1 --dpi-desync-fake-unknown-udp=/etc/zapret/quic_initial_www_google_com.bin --dpi-desync-cutoff=n2"
+  fi
+
+  procd_open_instance
+  procd_set_param command /usr/sbin/nfqws $args
+  procd_set_param respawn 3600 5 5
+  procd_set_param pidfile "$PIDFILE"
+  procd_close_instance
+}
+
+stop_service() {
+  remove_all_jumps
+  nft delete chain inet fw4 zapret 2>/dev/null || true
+  rm -f "$NFT_TMP"
+}
