@@ -1,0 +1,1 @@
+wget -qO- "https://raw.githubusercontent.com/m1ttya/openwrt-zapret-nfqws/main/openwrt/online_install.sh" | NFQWS_IPK_URL="https://github.com/Anonym-tsk/nfqws-keenetic/releases/download/v2.10.4/nfqws-keenetic_2.10.4_mips-3.4.ipk" ENABLE=1 sh
