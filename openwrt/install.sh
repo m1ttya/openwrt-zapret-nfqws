@@ -4,7 +4,12 @@ set -e
 # This script installs zapret service and LuCI app on OpenWrt.
 # Usage: scp -r openwrt root@ROUTER:/root/ && ssh root@ROUTER 'sh /root/openwrt/install.sh'
 
-PKGS="kmod-nfnetlink kmod-nft-core kmod-nft-netdev kmod-nft-queue libnetfilter-queue nftables ca-bundle luci-ssl"
+# Minimal required packages (keep small footprint)
+PKGS="kmod-nfnetlink kmod-nft-core kmod-nft-netdev kmod-nft-queue libnetfilter-queue nftables ca-bundle"
+# Optional: install luci-ssl only if explicitly requested (saves several MB on flash)
+if [ "${WITH_LUCI_SSL:-0}" = "1" ]; then
+  PKGS="$PKGS luci-ssl"
+fi
 # Auto-pick nfqws URL for your arch if not overridden
 NFQWS_URL="${NFQWS_URL:-}"
 NFQWS_IPK_URL="${NFQWS_IPK_URL:-}"

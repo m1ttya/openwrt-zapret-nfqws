@@ -1,1 +1,17 @@
+# One-line online installer (basic)
+wget -qO- "https://raw.githubusercontent.com/m1ttya/openwrt-zapret-nfqws/main/openwrt/online_install.sh" | sh
+
+# One-line installer using NFQWS IPK (Keenetic mips-3.4 example)
 wget -qO- "https://raw.githubusercontent.com/m1ttya/openwrt-zapret-nfqws/main/openwrt/online_install.sh" | NFQWS_IPK_URL="https://github.com/Anonym-tsk/nfqws-keenetic/releases/download/v2.10.4/nfqws-keenetic_2.10.4_mips-3.4.ipk" ENABLE=1 sh
+
+# One-line installer using direct NFQWS binary URL (replace with correct binary for your router arch)
+# Example placeholder: https://example.com/nfqws-mips_24kc
+wget -qO- "https://raw.githubusercontent.com/m1ttya/openwrt-zapret-nfqws/main/openwrt/online_install.sh" | NFQWS_URL="https://example.com/nfqws-mips_24kc" ENABLE=1 sh
+
+# Variants without certificate verification (if HTTPS certs are an issue)
+wget --no-check-certificate -qO- "https://raw.githubusercontent.com/m1ttya/openwrt-zapret-nfqws/main/openwrt/online_install.sh" | sh
+wget --no-check-certificate -qO- "https://raw.githubusercontent.com/m1ttya/openwrt-zapret-nfqws/main/openwrt/online_install.sh" | NFQWS_IPK_URL="https://github.com/Anonym-tsk/nfqws-keenetic/releases/download/v2.10.4/nfqws-keenetic_2.10.4_mips-3.4.ipk" ENABLE=1 sh
+wget --no-check-certificate -qO- "https://raw.githubusercontent.com/m1ttya/openwrt-zapret-nfqws/main/openwrt/online_install.sh" | NFQWS_URL="https://example.com/nfqws-mips_24kc" ENABLE=1 sh
+
+# After run, check logs:
+tail -n +1 /tmp/zapret_install.log

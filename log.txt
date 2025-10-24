@@ -1,0 +1,75 @@
+root@OpenWrt:~# wget -qO- "https://raw.githubusercontent.com/m1ttya/openwrt-zapr
+et-nfqws/main/openwrt/online_install.sh" | NFQWS_IPK_URL="https://github.com/Ano
+nym-tsk/nfqws-keenetic/releases/download/v2.10.4/nfqws-keenetic_2.10.4_mips-3.4.
+ipk" ENABLE=1 sh
+[zapret] tmpdir: /tmp/zapret-openwrt-5493
+[zapret] step 1/6: ensure wget/tar/CA certs
+[zapret] step 2/6: download repo: https://codeload.github.com/m1ttya/openwrt-zapret-nfqws/tar.gz/main
+[zapret] step 3/6: extract tarball
+[zapret] step 4/6: run installer
+[zapret] installer failed, see /tmp/zapret_install.log
+root@OpenWrt:~# vi zapret_install.log
+root@OpenWrt:~# vi /tmp/zapret_install.log
+===== [zapret] Online installer started Fri Oct 24 18:46:57 UTC 2025 =====
+REPO=m1ttya/openwrt-zapret-nfqws BRANCH=main SUBDIR=openwrt
+NFQWS_URL= NFQWS_IPK_URL=https://github.com/Anonym-tsk/nfqws-keenetic/releases/download/v2.10.4/nfqws-keenetic_2.10.4_mips-3.4.ipk
+[zapret] tmpdir: /tmp/zapret-openwrt-5493
+[zapret] step 1/6: ensure wget/tar/CA certs
+Installing wget-ssl (1.24.5-r1) to root...
+Collected errors:
+ * verify_pkg_installable: Only have 812kb available on filesystem /overlay, pkg libopenssl3 needs 3630
+ * opkg_install_cmd: Cannot install package wget-ssl.
+Downloading https://downloads.openwrt.org/releases/24.10.4/packages/mips_24kc/packages/wget-ssl_1.24.5-r1_mips_24kc.ipk
+Installing libpcre2 (10.42-r1) to root...
+Downloading https://downloads.openwrt.org/releases/24.10.4/packages/mips_24kc/base/libpcre2_10.42-r1_mips_24kc.ipk
+Installing zlib (1.3.1-r1) to root...
+Downloading https://downloads.openwrt.org/releases/24.10.4/packages/mips_24kc/base/zlib_1.3.1-r1_mips_24kc.ipk
+Installing libatomic1 (13.3.0-r4) to root...
+Downloading https://downloads.openwrt.org/releases/24.10.4/targets/ath79/generic/packages/libatomic1_13.3.0-r4_mips_24kc.ipk
+Installing libopenssl3 (3.0.18-r1) to root...
+Configuring libpcre2.
+Configuring zlib.
+Configuring libatomic1.
+Package uclient-fetch (2024.10.22~88ae8f20-r1) installed in root is up to date.
+Installing tar (1.35-r1) to root...
+Downloading https://downloads.openwrt.org/releases/24.10.4/packages/mips_24kc/packages/tar_1.35-r1_mips_24kc.ipk
+Installing xz-utils (5.6.2-r2) to root...
+Downloading https://downloads.openwrt.org/releases/24.10.4/packages/mips_24kc/packages/xz-utils_5.6.2-r2_mips_24kc.ipk
+Installing liblzma (5.6.2-r2) to root...
+Downloading https://downloads.openwrt.org/releases/24.10.4/packages/mips_24kc/packages/liblzma_5.6.2-r2_mips_24kc.ipk
+Installing xz (5.6.2-r2) to root...
+Downloading https://downloads.openwrt.org/releases/24.10.4/packages/mips_24kc/packages/xz_5.6.2-r2_mips_24kc.ipk
+Installing libattr (2.5.2-r3) to root...
+Downloading https://downloads.openwrt.org/releases/24.10.4/packages/mips_24kc/packages/libattr_2.5.2-r3_mips_24kc.ipk
+Installing libacl (2.3.2-r2) to root...
+Downloading https://downloads.openwrt.org/releases/24.10.4/packages/mips_24kc/packages/libacl_2.3.2-r2_mips_24kc.ipk
+Installing libbz2-1.0 (1.0.8-r1) to root...
+Downloading https://downloads.openwrt.org/releases/24.10.4/packages/mips_24kc/base/libbz2-1.0_1.0.8-r1_mips_24kc.ipk
+Installing bzip2 (1.0.8-r1) to root...
+Downloading https://downloads.openwrt.org/releases/24.10.4/packages/mips_24kc/base/bzip2_1.0.8-r1_mips_24kc.ipk
+Configuring libbz2-1.0.
+Configuring libattr.
+Configuring libacl.
+Configuring liblzma.
+Configuring bzip2.
+Configuring xz-utils.
+Configuring xz.
+Configuring tar.
+Package ca-bundle (20250419-r1) installed in root is up to date.
+Installing ca-certificates (20250419-r1) to root...
+Downloading https://downloads.openwrt.org/releases/24.10.4/packages/mips_24kc/base/ca-certificates_20250419-r1_all.ipk
+Configuring ca-certificates.
+Kernel: Linux OpenWrt 6.6.110 #0 Sun Oct 19 16:37:45 2025 mips GNU/Linux
+Archs: arch all 1 arch noarch 1 arch mips_24kc 10
+[zapret] step 2/6: download repo: https://codeload.github.com/m1ttya/openwrt-zapret-nfqws/tar.gz/main
+Downloading 'https://codeload.github.com/m1ttya/openwrt-zapret-nfqws/tar.gz/main'
+Connecting to 140.82.121.9:443
+Writing to '/tmp/zapret-openwrt-5493/src.tar.gz'
+^M/tmp/zapret-openwrt-   650k --:--:-- ETA
+Download completed (1380527 bytes)
+[zapret] step 3/6: extract tarball
+[zapret] passing NFQWS_IPK_URL
+[zapret] step 4/6: run installer
+Downloading https://downloads.openwrt.org/releases/24.10.4/targets/ath79/generic/packages/Packages.gz
+Updated list of available packages in /var/opkg-lists/openwrt_core
+- /tmp/zapret_install.log 1/131 0%

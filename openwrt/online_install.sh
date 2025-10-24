@@ -43,10 +43,24 @@ if ! command -v opkg >/dev/null 2>&1; then
   exit 1
 fi
 
-echo "[zapret] step 1/6: ensure wget/tar/CA certs" | tee -a "$LOG"
-command -v wget >/dev/null 2>&1 || opkg update >>"$LOG" 2>&1 && opkg install wget-ssl >>"$LOG" 2>&1 || opkg install wget >>"$LOG" 2>&1 || true
-command -v tar >/dev/null 2>&1 || opkg update >>"$LOG" 2>&1 && opkg install tar >>"$LOG" 2>&1 || true
-opkg install ca-bundle ca-certificates >>"$LOG" 2>&1 || true
+echo "[zapret] step 1/6: select downloader and tools (low footprint)" | tee -a "$LOG"
+# Prefer uclient-fetch (built-in on OpenWrt) to avoid installing wget-ssl/CA certs
+if command -v uclient-fetch >/dev/null 2>&1; then
+  DL_BIN="uclient-fetch"
+  DL_PIPE() { uclient-fetch -q -O - "$1"; }
+  DL_FILE() { uclient-fetch -q -O "$2" "$1"; }
+  echo "[zapret] using uclient-fetch" >> "$LOG"
+else
+  # Fallback to wget (may lack SSL). We'll permit --no-check-certificate if needed.
+  DL_BIN="wget"
+  DL_PIPE() { wget -qO- "$1" || wget --no-check-certificate -qO- "$1"; }
+  DL_FILE() { wget -q -O "$2" "$1" || wget --no-check-certificate -q -O "$2" "$1"; }
+  echo "[zapret] using wget (with fallback --no-check-certificate)" >> "$LOG"
+fi
+# Use busybox tar to avoid pulling full tar/xz packages
+if ! tar --help >/dev/null 2>&1; then
+  echo "[zapret] warning: tar not found; trying busybox tar" >> "$LOG"
+fi
 
 # Print basic system info
 {
