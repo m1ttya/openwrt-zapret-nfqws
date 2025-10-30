@@ -1,4 +1,4 @@
-m = Map("zapret", translate("Zapret"), translate("DPI bypass via nfqws and nftables"))
+m = Map("zapret", translate("Zapret 2.0"), translate("DPI bypass via nfqws and nftables"))
 
 s = m:section(TypedSection, "zapret", translate("Settings"))
 s.anonymous = true

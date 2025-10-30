@@ -4,7 +4,7 @@ function index()
     if not nixio.fs.access("/etc/config/zapret") then
         return
     end
-    entry({"admin", "services", "zapret"}, call("action_zapret"), _("Zapret"), 60)
+    entry({"admin", "services", "zapret"}, call("action_zapret"), _("Zapret 2.0"), 60)
 end
 
 function action_zapret()

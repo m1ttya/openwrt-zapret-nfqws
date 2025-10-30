@@ -71,7 +71,7 @@ fi
 # Download repo tarball (GitHub codeload)
 TARBALL_URL="https://codeload.github.com/${REPO}/tar.gz/${BRANCH}"
 echo "[zapret] step 2/6: download repo: $TARBALL_URL" | tee -a "$LOG"
-if ! wget -O "$TMPDIR/src.tar.gz" "$TARBALL_URL" >>"$LOG" 2>&1; then
+if ! DL_FILE "$TARBALL_URL" "$TMPDIR/src.tar.gz" >>"$LOG" 2>&1; then
   echo "[zapret] failed to download $TARBALL_URL" | tee -a "$LOG" >&2
   exit 1
 fi

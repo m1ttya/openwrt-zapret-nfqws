@@ -61,16 +61,23 @@ elif [ -n "$NFQWS_IPK_URL" ]; then
     if opkg install "$TMPIPK"; then
       echo "nfqws installed via opkg"
     else
-      echo "opkg failed to install IPK; attempting to extract binary"
-      mkdir -p /tmp/nfqws-extract && cd /tmp/nfqws-extract
-      ar x "$TMPIPK" || true
-      tar -xzf data.tar.gz || true
-      if [ -x ./usr/sbin/nfqws ]; then
-        mkdir -p /usr/sbin
-        cp -f ./usr/sbin/nfqws /usr/sbin/nfqws
-        chmod +x /usr/sbin/nfqws
+      echo "opkg failed to install IPK; the package is likely incompatible with this device/arch."
+      if command -v ar >/dev/null 2>&1; then
+        echo "Attempting to extract binary from IPK using ar..."
+        mkdir -p /tmp/nfqws-extract && cd /tmp/nfqws-extract
+        ar x "$TMPIPK" || true
+        if [ -f data.tar.gz ]; then
+          tar -xzf data.tar.gz || true
+        fi
+        if [ -x ./usr/sbin/nfqws ]; then
+          mkdir -p /usr/sbin
+          cp -f ./usr/sbin/nfqws /usr/sbin/nfqws
+          chmod +x /usr/sbin/nfqws
+        else
+          echo "Could not find nfqws binary in IPK; please provide NFQWS_URL for your architecture (e.g., mips_24kc) or place /usr/sbin/nfqws manually."
+        fi
       else
-        echo "Could not find nfqws binary in IPK"
+        echo "'ar' is not available on this system; cannot extract IPK. Please provide NFQWS_URL for your architecture (e.g., mips_24kc) or place /usr/sbin/nfqws manually."
       fi
     fi
   else
@@ -80,8 +87,16 @@ else
   echo "NOTE: No nfqws provided (no artifact, NFQWS_URL or NFQWS_IPK_URL). Place nfqws into /usr/sbin/nfqws manually."
 fi
 
-# Copy rootfs files
-cp -vr /root/openwrt/rootfs/* /
+# Copy rootfs files from the script directory (works for both SSH and online installer)
+SCRIPT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" 2>/dev/null && pwd)"
+if [ -z "$SCRIPT_DIR" ]; then
+  SCRIPT_DIR="/root/openwrt"
+fi
+if [ -d "$SCRIPT_DIR/rootfs" ]; then
+  cp -vr "$SCRIPT_DIR/rootfs"/* /
+else
+  echo "ERROR: rootfs directory not found next to install.sh (SCRIPT_DIR=$SCRIPT_DIR)"
+fi
 
 # Ensure permissions
 chmod +x /etc/init.d/zapret /etc/zapret/zapret.sh 2>/dev/null || true
