@@ -64,12 +64,21 @@ EOF
 
 build_ipset_nft() {
   # Ensure table exists (fw4 should exist on OpenWrt 22.03+)
-  nft list table inet fw4 >/dev/null 2>&1 || nft add table inet fw4 || true
-  # Ensure set exists
-  nft list set inet fw4 zapret_ipset >/dev/null 2>&1 || nft add set inet fw4 zapret_ipset { type ipv4_addr; flags interval; auto-merge; } || true
-  # Flush set
-  nft flush set inet fw4 zapret_ipset || true
-  # Populate from file (first column, ignore CR)
+  nft list table inet fw4 >/dev/null 2>&1 || nft -f - <<'EOF'
+add table inet fw4
+EOF
+
+  # Ensure set exists (avoid 'auto-merge' for broader compatibility)
+  nft list set inet fw4 zapret_ipset >/dev/null 2>&1 || nft -f - <<'EOF'
+add set inet fw4 zapret_ipset { type ipv4_addr; flags interval; }
+EOF
+
+  # Flush set using nft -f to avoid shell interpreting braces
+  nft -f - <<'EOF'
+flush set inet fw4 zapret_ipset
+EOF
+
+  # Populate from file (first column, ignore CR). Accept both IPv4 and CIDR.
   awk '{gsub(/\r/,""); if ($1 ~ /^[0-9]/) print $1 }' "$IPSET_PATH" | while read -r ip; do
     [ -n "$ip" ] && nft add element inet fw4 zapret_ipset { $ip } 2>/dev/null || true
   done

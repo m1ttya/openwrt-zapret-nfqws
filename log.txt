@@ -70,3 +70,69 @@ Could not find nfqws binary in IPK
 cp: can't stat '/root/openwrt/rootfs/*': No such file or directory
 [zapret] installer failed, see /tmp/zapret_install.log
 [zapret] cleanup
+===== [zapret] Online installer started Thu Oct 30 20:27:02 UTC 2025 =====
+REPO=m1ttya/openwrt-zapret-nfqws BRANCH=main SUBDIR=openwrt
+NFQWS_URL= NFQWS_IPK_URL=https://github.com/Anonym-tsk/nfqws-keenetic/releases/download/v2.10.4/nfqws-keenetic_2.10.4_mips-3.4.ipk
+[zapret] tmpdir: /tmp/zapret-openwrt-10811
+[zapret] step 1/6: select downloader and tools (low footprint)
+[zapret] using uclient-fetch
+Kernel: Linux OpenWrt 6.6.110 #0 Sun Oct 19 16:37:45 2025 mips GNU/Linux
+Archs: arch all 1 arch noarch 1 arch mips_24kc 10
+[zapret] step 2/6: download repo: https://codeload.github.com/m1ttya/openwrt-zapret-nfqws/tar.gz/main
+[zapret] step 3/6: extract tarball
+[zapret] passing NFQWS_IPK_URL
+[zapret] step 4/6: run installer
+Downloading https://downloads.openwrt.org/releases/24.10.4/targets/ath79/generic/packages/Packages.gz
+Updated list of available packages in /var/opkg-lists/openwrt_core
+Downloading https://downloads.openwrt.org/releases/24.10.4/targets/ath79/generic/packages/Packages.sig
+Signature check passed.
+Downloading https://downloads.openwrt.org/releases/24.10.4/packages/mips_24kc/base/Packages.gz
+Updated list of available packages in /var/opkg-lists/openwrt_base
+Downloading https://downloads.openwrt.org/releases/24.10.4/packages/mips_24kc/base/Packages.sig
+Signature check passed.
+Downloading https://downloads.openwrt.org/releases/24.10.4/targets/ath79/generic/kmods/6.6.110-1-35ef4dd36891d37023436baa842fa311/Packages.gz
+Updated list of available packages in /var/opkg-lists/openwrt_kmods
+Downloading https://downloads.openwrt.org/releases/24.10.4/targets/ath79/generic/kmods/6.6.110-1-35ef4dd36891d37023436baa842fa311/Packages.sig
+Signature check passed.
+Downloading https://downloads.openwrt.org/releases/24.10.4/packages/mips_24kc/luci/Packages.gz
+Updated list of available packages in /var/opkg-lists/openwrt_luci
+Downloading https://downloads.openwrt.org/releases/24.10.4/packages/mips_24kc/luci/Packages.sig
+Signature check passed.
+Downloading https://downloads.openwrt.org/releases/24.10.4/packages/mips_24kc/packages/Packages.gz
+Updated list of available packages in /var/opkg-lists/openwrt_packages
+Downloading https://downloads.openwrt.org/releases/24.10.4/packages/mips_24kc/packages/Packages.sig
+Signature check passed.
+Downloading https://downloads.openwrt.org/releases/24.10.4/packages/mips_24kc/routing/Packages.gz
+Updated list of available packages in /var/opkg-lists/openwrt_routing
+Downloading https://downloads.openwrt.org/releases/24.10.4/packages/mips_24kc/routing/Packages.sig
+Signature check passed.
+Downloading https://downloads.openwrt.org/releases/24.10.4/packages/mips_24kc/telephony/Packages.gz
+Updated list of available packages in /var/opkg-lists/openwrt_telephony
+Downloading https://downloads.openwrt.org/releases/24.10.4/packages/mips_24kc/telephony/Packages.sig
+Signature check passed.
+Package kmod-nfnetlink (6.6.110-r1) installed in root is up to date.
+Package kmod-nft-core (6.6.110-r1) installed in root is up to date.
+Package kmod-nft-netdev (6.6.110-r1) installed in root is up to date.
+Package kmod-nft-queue (6.6.110-r1) installed in root is up to date.
+Package libnetfilter-queue1 (1.0.5-r4) installed in root is up to date.
+Package nftables-json (1.1.1-r1) installed in root is up to date.
+Package ca-bundle (20250419-r1) installed in root is up to date.
+Installing nfqws IPK from https://github.com/Anonym-tsk/nfqws-keenetic/releases/download/v2.10.4/nfqws-keenetic_2.10.4_mips-3.4.ipk
+Downloading 'https://github.com/Anonym-tsk/nfqws-keenetic/releases/download/v2.10.4/nfqws-keenetic_2.10.4_mips-3.4.ipk'
+Connecting to 140.82.121.3:443
+Redirected to /github-production-release-asset/840309999/29d85f1b-2064-446d-9b72-ed3de25968d2?sp=r&sv=2018-11-09&sr=b&spr=https&se=2025-10-30T21%3A06%3A46Z&rscd=attachment%3B+filename%3Dnfqws-keenetic_2.10.4_mips-3.4.ipk&rsct=application%2Foctet-stream&skoid=96c2d410-5711-43a1-aedd-ab1947aa7ab0&sktid=398a6654-997b-47e9-b12b-9515b896b4de&skt=2025-10-30T20%3A06%3A37Z&ske=2025-10-30T21%3A06%3A46Z&sks=b&skv=2018-11-09&sig=gVlqyvOJQREQplQbs4%2Bx%2F7EO%2F7vqbsTIMYWu0%2BP5K8U%3D&jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmVsZWFzZS1hc3NldHMuZ2l0aHVidXNlcmNvbnRlbnQuY29tIiwia2V5Ijoia2V5MSIsImV4cCI6MTc2MTg1NjM1MCwibmJmIjoxNzYxODU2MDUwLCJwYXRoIjoicmVsZWFzZWFzc2V0cHJvZHVjdGlvbi5ibG9iLmNvcmUud2luZG93cy5uZXQifQ.cidw0l6IPB78ItG4HhV7Ob31TRF1HOPOrrmcTJ2iQZY&response-content-disposition=attachment%3B%20filename%3Dnfqws-keenetic_2.10.4_mips-3.4.ipk&response-content-type=application%2Foctet-stream on release-assets.githubusercontent.com
+Writing to '/tmp/nfqws.ipk'
+/tmp/nfqws.ipk       100% |*******************************|   150k  0:00:00 ETA
+Download completed (153992 bytes)
+Unknown package 'nfqws-keenetic'.
+Collected errors:
+ * pkg_hash_fetch_best_installation_candidate: Packages for nfqws-keenetic found, but incompatible with the architectures configured
+ * opkg_install_cmd: Cannot install package nfqws-keenetic.
+opkg failed to install IPK; the package is likely incompatible with this device/arch.
+'ar' is not available on this system; cannot extract IPK. Please provide NFQWS_URL for your architecture (e.g., mips_24kc) or place /usr/sbin/nfqws manually.
+Error: No such file or directory
+flush set inet fw4 zapret_ipset
+                   ^^^^^^^^^^^^
+/etc/rc.common: /etc/init.d/zapret: line 76: syntax error: unexpected "}"
+[zapret] installer failed, see /tmp/zapret_install.log
+[zapret] cleanup
