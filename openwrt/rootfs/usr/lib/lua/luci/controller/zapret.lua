@@ -1,9 +1,7 @@
 module("luci.controller.zapret", package.seeall)
 
 function index()
-    if not nixio.fs.access("/etc/config/zapret") then
-        return
-    end
+    -- Always show menu entry; the form will render even if config is missing (defaults will apply)
     entry({"admin", "services", "zapret"}, call("action_zapret"), _("Zapret 2.0"), 60)
 end
 
